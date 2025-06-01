@@ -1,5 +1,5 @@
 ---
-description: When designing a frontend or frontend components.
+description: "When designing a frontend or frontend components."
 globs: 
 alwaysApply: false
 ---

@@ -1,7 +1,5 @@
 ---
-description: 
-globs: *.md
-alwaysApply: false
+applyTo: "*.md"
 ---
 ### README.md Rules
 
