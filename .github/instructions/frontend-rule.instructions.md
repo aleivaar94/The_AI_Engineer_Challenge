@@ -1,8 +1,3 @@
----
-description: "When designing a frontend or frontend components."
-globs: 
-alwaysApply: false
----
 ### Rules for Frontend
 
 - You must pay attention to visual clarity and contrast. Do not place white text on a white background.
