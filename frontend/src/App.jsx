@@ -31,6 +31,14 @@ function App() {
   const [apiKeyInput, setApiKeyInput] = useState('');
   const [apiKey, setApiKey] = useState('');
 
+  // Regular chat conversation state
+  const [chatHistory, setChatHistory] = useState([
+    { role: 'system', content: 'You are a helpful AI assistant.' }
+  ]);
+  const [userInput, setUserInput] = useState('');
+  const [isChatLoading, setIsChatLoading] = useState(false);
+  const chatContainerRef = React.useRef(null);
+
   // Check PDF status on component mount
   useEffect(() => {
     const storedKey = sessionStorage.getItem('openai_api_key');
@@ -46,6 +54,13 @@ function App() {
       sessionStorage.setItem('openai_api_key', apiKey);
     }
   }, [apiKey]);
+
+  // Scroll to bottom when chatHistory changes
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chatHistory, isChatLoading]);
 
   /**
    * Check the status of uploaded PDF
@@ -300,6 +315,62 @@ function App() {
     setShowApiKeyModal(false);
   };
 
+  // Send user message and get assistant response
+  const handleChatSubmit = async (e) => {
+    e.preventDefault();
+    if (!userInput.trim() || !apiKey) return;
+    setIsChatLoading(true);
+    setError('');
+    // Add user message to history
+    setChatHistory(prev => [...prev, { role: 'user', content: userInput }]);
+    setUserInput('');
+    try {
+      // Prepare messages for API (system + all previous + new user)
+      const messages = chatHistory
+        .filter(m => m.role !== 'assistant_stream')
+        .concat({ role: 'user', content: userInput });
+      // Streaming response
+      const apiResponse = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          developer_message: messages.find(m => m.role === 'system')?.content || '',
+          user_message: messages.filter(m => m.role === 'user').map(m => m.content).join('\n'),
+          model: formData.model,
+          api_key: apiKey
+        }),
+      });
+      if (!apiResponse.ok) throw new Error(`API Error: ${apiResponse.status}`);
+      const reader = apiResponse.body?.getReader();
+      const decoder = new TextDecoder();
+      if (!reader) throw new Error('Failed to get response reader');
+      let accumulated = '';
+      // Add a streaming placeholder
+      setChatHistory(prev => [...prev, { role: 'assistant_stream', content: '' }]);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        accumulated += chunk;
+        setChatHistory(prev => prev.map((msg, i) =>
+          i === prev.length - 1 && msg.role === 'assistant_stream'
+            ? { ...msg, content: accumulated }
+            : msg
+        ));
+      }
+      // Replace streaming placeholder with final assistant message
+      setChatHistory(prev => prev.map((msg, i) =>
+        i === prev.length - 1 && msg.role === 'assistant_stream'
+          ? { role: 'assistant', content: accumulated }
+          : msg
+      ));
+    } catch (err) {
+      setError(`Failed to get response: ${err.message}`);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
+
   return (
     <div className="app">
       {/* Application Header */}
@@ -357,87 +428,32 @@ function App() {
         
         {/* Regular Chat Tab */}
         {activeTab === 'regular' && (
-          <form onSubmit={handleSubmit}>
-            {/* Developer/System Message Input */}
-            <div className="form-group">
-              <label htmlFor="developerMessage">
-                Developer Message (System Prompt) *
-              </label>
-              <textarea
-                id="developerMessage"
-                name="developerMessage"
-                value={formData.developerMessage}
-                onChange={handleInputChange}
-                placeholder="Enter the system message or instructions for the AI..."
-                required
-              />
-            </div>
-
-            {/* User Message Input */}
-            <div className="form-group">
-              <label htmlFor="userMessage">
-                User Message *
-              </label>
-              <textarea
-                id="userMessage"
-                name="userMessage"
-                value={formData.userMessage}
-                onChange={handleInputChange}
-                placeholder="Enter your question or prompt..."
-                required
-              />
-            </div>
-
-            {/* Model Selection */}
-            <div className="form-group">
-              <label htmlFor="model">
-                OpenAI Model
-              </label>
-              <select
-                id="model"
-                name="model"
-                value={formData.model}
-                onChange={handleInputChange}
-              >
-                <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
-                <option value="gpt-4">GPT-4</option>
-                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                <option value="gpt-4-turbo">GPT-4 Turbo</option>
-              </select>
-            </div>
-
-            {/* API Key Input */}
-            <div className="form-group">
-              <label htmlFor="apiKey">
-                OpenAI API Key *
-              </label>
-              <input
-                type="password"
-                id="apiKey"
-                name="apiKey"
-                value={formData.apiKey}
-                onChange={handleInputChange}
-                placeholder="sk-..."
-                required
-              />
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              className="submit-btn"
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <span className="loading">
-                  <span className="loading-spinner"></span>
-                  Generating Response...
-                </span>
-              ) : (
-                '🚀 Send Message'
+          <div className="chat-outer">
+            <div className="chat-history" ref={chatContainerRef}>
+              {chatHistory.filter(m => m.role !== 'system').map((msg, idx) => (
+                <div key={idx} className={`chat-msg ${msg.role}`}> 
+                  <span className="chat-bubble">{msg.content}</span>
+                </div>
+              ))}
+              {isChatLoading && (
+                <div className="chat-msg assistant">
+                  <span className="chat-bubble typing-indicator">AI is typing...</span>
+                </div>
               )}
-            </button>
-          </form>
+            </div>
+            <form className="chat-input-row" onSubmit={handleChatSubmit}>
+              <input
+                type="text"
+                className="chat-input"
+                value={userInput}
+                onChange={e => setUserInput(e.target.value)}
+                placeholder="Type your message..."
+                disabled={isChatLoading}
+                autoFocus
+              />
+              <button type="submit" className="chat-send-btn" disabled={isChatLoading || !userInput.trim()}>Send</button>
+            </form>
+          </div>
         )}
 
         {/* PDF Chat Tab */}
