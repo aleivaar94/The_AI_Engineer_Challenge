@@ -24,7 +24,7 @@ function App() {
   const [ragMessage, setRagMessage] = useState('');
   const [ragResponse, setRagResponse] = useState('');
   const [isRagLoading, setIsRagLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('regular'); // 'regular' or 'pdf'
+  const [activeSidebar, setActiveSidebar] = useState('chat'); // 'chat' or 'pdf'
 
   // API Key modal state
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
@@ -438,18 +438,14 @@ function App() {
         <div className="sidebar-header">🧠 AI Engineer</div>
         <nav className="sidebar-nav">
           <ul>
-            <li className="sidebar-item active">Chat</li>
-            <li className="sidebar-item">PDF</li>
-            <li className="sidebar-item">Settings</li>
+            <li className={`sidebar-item${activeSidebar === 'chat' ? ' active' : ''}`} onClick={() => setActiveSidebar('chat')}>Chat</li>
+            <li className={`sidebar-item${activeSidebar === 'pdf' ? ' active' : ''}`} onClick={() => setActiveSidebar('pdf')}>PDF</li>
+            <li className="sidebar-item" onClick={handleApiKeyButton}>Set API Key</li>
           </ul>
         </nav>
       </aside>
       <div className="app">
         <header className="header">
-          {/* API Key Button restored */}
-          <button className="api-key-btn" onClick={handleApiKeyButton}>
-            Set API Key
-          </button>
           <h1>
             Hi there, <span className="gradient-text">John</span><br />
             What would like to know?
@@ -457,25 +453,10 @@ function App() {
           <p>Use your own prompt or chat with your PDF!</p>
         </header>
         <main className="main-content">
-          {/* Tab Navigation */}
-          <div className="tab-navigation">
-            <button 
-              className={`tab-button ${activeTab === 'regular' ? 'active' : ''}`}
-              onClick={() => setActiveTab('regular')}
-            >
-              Regular Chat
-            </button>
-            <button 
-              className={`tab-button ${activeTab === 'pdf' ? 'active' : ''}`}
-              onClick={() => setActiveTab('pdf')}
-            >
-              PDF Chat
-            </button>
-          </div>
-          {/* Main Content Area */}
+          {/* Main Content Area controlled by sidebar */}
           <div className="main-content-area">
-            {/* Regular Chat Tab */}
-            {activeTab === 'regular' && (
+            {/* Regular Chat View */}
+            {activeSidebar === 'chat' && (
               <div className="chat-outer">
                 <div className="chat-history" ref={chatContainerRef}>
                   {chatHistory.filter(m => m.role !== 'system').map((msg, idx) => (
@@ -504,8 +485,8 @@ function App() {
               </div>
             )}
 
-            {/* PDF Chat Tab */}
-            {activeTab === 'pdf' && (
+            {/* PDF Chat View */}
+            {activeSidebar === 'pdf' && (
               <div className="pdf-chat-container">
                 {/* PDF Upload Section */}
                 <div className="pdf-upload-section">
@@ -603,7 +584,7 @@ function App() {
             )}
 
             {/* Regular Chat Response Display */}
-            {activeTab === 'regular' && (response || isLoading) && (
+            {activeSidebar === 'chat' && (response || isLoading) && (
               <div className="response-container">
                 <h3>
                   {isLoading ? (
@@ -619,7 +600,7 @@ function App() {
             )}
 
             {/* RAG Chat Response Display */}
-            {activeTab === 'pdf' && (ragResponse || isRagLoading) && (
+            {activeSidebar === 'pdf' && (ragResponse || isRagLoading) && (
               <div className="response-container">
                 <h3>
                   {isRagLoading ? (
