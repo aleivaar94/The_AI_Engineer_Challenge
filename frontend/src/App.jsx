@@ -108,29 +108,24 @@ function App() {
    * Handle PDF upload and indexing
    */
   const handlePdfUpload = async () => {
-    if (!selectedFile || !formData.apiKey.trim()) {
-      setError('Please select a PDF file and provide an API key');
+    if (!selectedFile || !apiKey) {
+      setError('Please select a PDF file and set your API key');
       return;
     }
-
     setIsUploading(true);
     setError('');
-
     try {
       const formDataUpload = new FormData();
       formDataUpload.append('file', selectedFile);
-      formDataUpload.append('api_key', formData.apiKey);
-
+      formDataUpload.append('api_key', apiKey);
       const response = await fetch('/api/upload-pdf', {
         method: 'POST',
         body: formDataUpload,
       });
-
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || 'Upload failed');
       }
-
       const result = await response.json();
       setPdfStatus({ 
         uploaded: true, 
@@ -139,11 +134,8 @@ function App() {
         total_characters: result.total_characters
       });
       setSelectedFile(null);
-      
-      // Clear file input
       const fileInput = document.getElementById('pdf-file');
       if (fileInput) fileInput.value = '';
-      
       alert(`PDF uploaded successfully! Processed ${result.chunks_count} chunks.`);
     } catch (err) {
       setError(`Upload failed: ${err.message}`);
@@ -547,22 +539,6 @@ function App() {
                 </div>
               )}
 
-              {/* API Key for PDF operations */}
-              <div className="form-group">
-                <label htmlFor="apiKey">
-                  OpenAI API Key *
-                </label>
-                <input
-                  type="password"
-                  id="apiKey"
-                  name="apiKey"
-                  value={formData.apiKey}
-                  onChange={handleInputChange}
-                  placeholder="sk-..."
-                  required
-                />
-              </div>
-
               {/* File Upload */}
               <div className="form-group">
                 <label htmlFor="pdf-file">
@@ -584,7 +560,7 @@ function App() {
               <button
                 onClick={handlePdfUpload}
                 className="upload-btn"
-                disabled={!selectedFile || isUploading || !formData.apiKey}
+                disabled={!selectedFile || isUploading || !apiKey}
               >
                 {isUploading ? (
                   <span className="loading">
