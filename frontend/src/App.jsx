@@ -436,7 +436,10 @@ function App() {
     <div className="app-layout dark-mode">
       <div className="app dark-app">
         <header className="header dark-header">
-          {/* No greeting message */}
+          {/* Set API Key button at top right */}
+          <button className="api-key-btn-top" onClick={handleApiKeyButton}>
+            Set API Key
+          </button>
         </header>
         <main className="main-content dark-main-content">
           {/* Tab Navigation */}
@@ -452,9 +455,6 @@ function App() {
               onClick={() => setActiveTab('pdf')}
             >
               PDF Chat
-            </button>
-            <button className="tab-button" onClick={handleApiKeyButton}>
-              Set API Key
             </button>
           </div>
           <div className="main-content-area">

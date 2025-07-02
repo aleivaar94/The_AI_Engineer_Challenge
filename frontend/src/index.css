@@ -119,6 +119,7 @@ body {
   color: white;
   padding: 30px;
   text-align: center;
+  position: relative;
 }
 
 .header h1 {
@@ -130,6 +131,27 @@ body {
 .header p {
   font-size: 1.1rem;
   opacity: 0.9;
+}
+
+.api-key-btn-top {
+  position: absolute;
+  top: 24px;
+  right: 40px;
+  background: #6c63ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(108,99,255,0.08);
+  z-index: 10;
+  transition: background 0.2s, color 0.2s;
+}
+.api-key-btn-top:hover {
+  background: #5548c8;
+  color: #fff;
 }
 
 .main-content {
