@@ -535,6 +535,12 @@ function App() {
                       type="file"
                       id="pdf-file"
                       accept=".pdf"
+                      onClick={e => {
+                        if (!apiKey) {
+                          e.preventDefault(); // Prevent file dialog
+                          setShowApiKeyAlert(true); // Show pop-up modal
+                        }
+                      }}
                       onChange={handleFileSelect}
                     />
                     {selectedFile && (
@@ -664,7 +670,15 @@ function App() {
         {showApiKeyAlert && (
           <div className="modal-backdrop">
             <div className="modal">
-              <h2>Set API key first</h2>
+              <h2 style={{
+                color: '#fff',
+                fontWeight: 800,
+                fontSize: '2rem',
+                textAlign: 'center',
+                textShadow: '0 2px 8px #222, 0 0 2px #764ba2',
+                marginBottom: '1.5rem',
+                letterSpacing: '0.5px',
+              }}>Set API key first</h2>
               <button className="submit-btn" onClick={() => setShowApiKeyAlert(false)}>
                 OK
               </button>
