@@ -24,9 +24,8 @@ function App() {
   const [ragMessage, setRagMessage] = useState('');
   const [ragResponse, setRagResponse] = useState('');
   const [isRagLoading, setIsRagLoading] = useState(false);
-  // Sidebar navigation state
-  const [activeSidebar, setActiveSidebar] = useState('chat'); // 'chat' or 'pdf'
-  const [sidebarOpen, setSidebarOpen] = useState(true); // Collapsible sidebar state
+  // Tab navigation state
+  const [activeTab, setActiveTab] = useState('chat'); // 'chat' or 'pdf'
 
   // API Key modal state
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
@@ -435,30 +434,32 @@ function App() {
 
   return (
     <div className="app-layout dark-mode">
-      {/* Collapsible Sidebar */}
-      <aside className={`sidebar dark-sidebar${sidebarOpen ? '' : ' collapsed'}`}> 
-        <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
-          {sidebarOpen ? '<' : '>'}
-        </button>
-        {sidebarOpen && (
-          <nav className="sidebar-nav">
-            <ul>
-              <li className={`sidebar-item${activeSidebar === 'chat' ? ' active' : ''}`} onClick={() => setActiveSidebar('chat')}>Chat</li>
-              <li className={`sidebar-item${activeSidebar === 'pdf' ? ' active' : ''}`} onClick={() => setActiveSidebar('pdf')}>PDF</li>
-              <li className="sidebar-item" onClick={handleApiKeyButton}>Set API Key</li>
-            </ul>
-          </nav>
-        )}
-      </aside>
       <div className="app dark-app">
         <header className="header dark-header">
           {/* No greeting message */}
         </header>
         <main className="main-content dark-main-content">
-          {/* Main Content Area controlled by sidebar */}
+          {/* Tab Navigation */}
+          <div className="tab-navigation">
+            <button 
+              className={`tab-button${activeTab === 'chat' ? ' active' : ''}`}
+              onClick={() => setActiveTab('chat')}
+            >
+              Chat
+            </button>
+            <button 
+              className={`tab-button${activeTab === 'pdf' ? ' active' : ''}`}
+              onClick={() => setActiveTab('pdf')}
+            >
+              PDF Chat
+            </button>
+            <button className="tab-button" onClick={handleApiKeyButton}>
+              Set API Key
+            </button>
+          </div>
           <div className="main-content-area">
             {/* Regular Chat View */}
-            {activeSidebar === 'chat' && (
+            {activeTab === 'chat' && (
               <div className="chat-outer">
                 <div className="chat-history" ref={chatContainerRef}>
                   {chatHistory.filter(m => m.role !== 'system').map((msg, idx) => (
@@ -488,7 +489,7 @@ function App() {
             )}
 
             {/* PDF Chat View */}
-            {activeSidebar === 'pdf' && (
+            {activeTab === 'pdf' && (
               <div className="pdf-chat-container">
                 {/* PDF Upload Section */}
                 <div className="pdf-upload-section">
@@ -586,7 +587,7 @@ function App() {
             )}
 
             {/* Regular Chat Response Display */}
-            {activeSidebar === 'chat' && (response || isLoading) && (
+            {activeTab === 'chat' && (response || isLoading) && (
               <div className="response-container">
                 <h3>
                   {isLoading ? (
@@ -602,7 +603,7 @@ function App() {
             )}
 
             {/* RAG Chat Response Display */}
-            {activeSidebar === 'pdf' && (ragResponse || isRagLoading) && (
+            {activeTab === 'pdf' && (ragResponse || isRagLoading) && (
               <div className="response-container">
                 <h3>
                   {isRagLoading ? (
