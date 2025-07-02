@@ -489,6 +489,17 @@ function App() {
                   )}
                 </div>
                 <form className="chat-input-row" onSubmit={handleChatSubmit}>
+                  <select
+                    className="chat-model-select"
+                    value={formData.model}
+                    onChange={e => setFormData(prev => ({ ...prev, model: e.target.value }))}
+                    style={{ marginRight: '0.5rem', minWidth: '140px' }}
+                  >
+                    <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
+                    <option value="gpt-4.1-nano">GPT-4.1 Nano</option>
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                    {/* Add more models as needed */}
+                  </select>
                   <input
                     type="text"
                     className="chat-input"
