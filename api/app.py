@@ -63,6 +63,7 @@ async def chat(request: ChatRequest):
             stream = client.chat.completions.create(
                 model=request.model,
                 messages=[
+                    {"role": "system", "content": "Answer in short and concise way."},
                     {"role": "developer", "content": request.developer_message},
                     {"role": "user", "content": request.user_message}
                 ],
@@ -161,12 +162,13 @@ async def chat_with_pdf(request: RAGChatRequest):
         context = "\n\n".join(relevant_chunks)
         
         # Create RAG prompt
-        system_message = f"""You are a helpful assistant that answers questions based on the provided PDF content. 
-Use the following context from the PDF to answer the user's question. If the answer cannot be found in the context, 
-say so politely and suggest what information might be helpful.
-
-Context from PDF:
-{context}"""
+        system_message = (
+            "Answer in short and concise way. "
+            "You are a helpful assistant that answers questions based on the provided PDF content. "
+            "Use the following context from the PDF to answer the user's question. If the answer cannot be found in the context, "
+            "say so politely and suggest what information might be helpful.\n\n"
+            f"Context from PDF:\n{context}"
+        )
         
         # Initialize OpenAI client with the provided API key
         client = OpenAI(api_key=request.api_key)
