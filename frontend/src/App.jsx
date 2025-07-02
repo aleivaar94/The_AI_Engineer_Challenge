@@ -26,10 +26,26 @@ function App() {
   const [isRagLoading, setIsRagLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('regular'); // 'regular' or 'pdf'
 
+  // API Key modal state
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [apiKey, setApiKey] = useState('');
+
   // Check PDF status on component mount
   useEffect(() => {
+    const storedKey = sessionStorage.getItem('openai_api_key');
+    if (storedKey) {
+      setApiKey(storedKey);
+    }
     checkPdfStatus();
   }, []);
+
+  // When apiKey changes, update sessionStorage
+  useEffect(() => {
+    if (apiKey) {
+      sessionStorage.setItem('openai_api_key', apiKey);
+    }
+  }, [apiKey]);
 
   /**
    * Check the status of uploaded PDF
@@ -273,28 +289,52 @@ function App() {
     }
   };
 
+  // API Key Modal handlers
+  const handleApiKeyButton = () => {
+    setShowApiKeyModal(true);
+    setApiKeyInput(apiKey || '');
+  };
+  const handleApiKeySave = (e) => {
+    e.preventDefault();
+    setApiKey(apiKeyInput.trim());
+    setShowApiKeyModal(false);
+  };
+
   return (
     <div className="app">
       {/* Application Header */}
-      <header className="header">
+      <header className="header" style={{ position: 'relative' }}>
         <h1>🤖 AI Chat Interface with PDF RAG</h1>
         <p>Chat with OpenAI models or upload a PDF and ask questions about it</p>
-        <button 
-          onClick={checkHealth}
-          style={{
-            marginTop: '15px',
-            padding: '8px 16px',
-            background: 'rgba(255,255,255,0.2)',
-            color: 'white',
-            border: '1px solid rgba(255,255,255,0.3)',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '0.9rem'
-          }}
+        {/* API Key Button */}
+        <button
+          className="api-key-btn"
+          style={{ position: 'absolute', top: 20, right: 30 }}
+          onClick={handleApiKeyButton}
         >
-          Check API Health
+          {apiKey ? '🔑 API Key Set' : '🔑 Add API Key'}
         </button>
       </header>
+
+      {/* API Key Modal */}
+      {showApiKeyModal && (
+        <div className="modal-backdrop">
+          <div className="modal">
+            <h2>Enter your OpenAI API Key</h2>
+            <form onSubmit={handleApiKeySave}>
+              <input
+                type="password"
+                value={apiKeyInput}
+                onChange={e => setApiKeyInput(e.target.value)}
+                placeholder="sk-..."
+                autoFocus
+                className="api-key-input"
+              />
+              <button type="submit" className="submit-btn" style={{marginTop: 16}}>Enter</button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Tab Navigation */}
       <div className="tab-navigation">
