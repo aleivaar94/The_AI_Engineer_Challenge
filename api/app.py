@@ -1,5 +1,5 @@
 # Import required FastAPI components for building the API
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 # Import Pydantic for data validation and settings management
@@ -83,7 +83,7 @@ async def chat(request: ChatRequest):
 
 # Define PDF upload endpoint for indexing
 @app.post("/api/upload-pdf")
-async def upload_pdf(file: UploadFile = File(...), api_key: str = ""):
+async def upload_pdf(file: UploadFile = File(...), api_key: str = Form("")):
     """Upload and index a PDF file for RAG-based chat"""
     global vector_db, pdf_content
     
