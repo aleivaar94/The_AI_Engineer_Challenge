@@ -109,6 +109,11 @@ function App() {
    * Handle PDF upload and indexing
    */
   const handlePdfUpload = async () => {
+    // Check if API key is set before uploading
+    if (!apiKey) {
+      setError('Set API key to index the file');
+      return;
+    }
     if (!selectedFile || !apiKey) {
       setError('Please select a PDF file and set your API key');
       return;
@@ -540,7 +545,13 @@ function App() {
                   </div>
 
                   <button
-                    onClick={handlePdfUpload}
+                    onClick={() => {
+                      if (!apiKey) {
+                        setError('Set API key to index the file');
+                        return;
+                      }
+                      handlePdfUpload();
+                    }}
                     className="upload-btn"
                     disabled={!selectedFile || isUploading || !apiKey}
                   >
