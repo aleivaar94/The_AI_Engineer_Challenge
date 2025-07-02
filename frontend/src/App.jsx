@@ -448,7 +448,7 @@ function App() {
         <header className="header dark-header">
           {/* Set API Key button at top right */}
           <button className="api-key-btn-top" onClick={handleApiKeyButton}>
-            Set API Key
+            {apiKey ? 'API Key set' : 'Set API Key'}
           </button>
         </header>
         <main className="main-content dark-main-content">
