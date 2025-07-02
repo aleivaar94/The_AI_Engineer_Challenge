@@ -580,7 +580,119 @@ body {
   font-weight: 600;
 }
 
-/* Responsive design */
+/* Dark mode styles */
+.dark-mode {
+  background: #181a20;
+}
+
+.dark-sidebar {
+  background: #232634;
+  color: #e0e0e0;
+  box-shadow: 2px 0 16px rgba(24,26,32,0.12);
+}
+.dark-sidebar .sidebar-item {
+  color: #b0b3c6;
+}
+.dark-sidebar .sidebar-item.active, .dark-sidebar .sidebar-item:hover {
+  background: #31344b;
+  color: #fff;
+  border-left: 4px solid #6c63ff;
+}
+
+.dark-app {
+  background: #232634;
+  color: #e0e0e0;
+  box-shadow: 0 20px 40px rgba(24,26,32,0.18);
+}
+
+.dark-header {
+  background: #232634;
+  color: #e0e0e0;
+  border-bottom: 1px solid #232634;
+}
+
+.dark-main-content {
+  background: #232634;
+  color: #e0e0e0;
+}
+
+.form-group label,
+.response-container h3,
+.pdf-upload-section h3,
+.pdf-chat-section h3 {
+  color: #e0e0e0;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  background: #232634;
+  color: #e0e0e0;
+  border: 2px solid #31344b;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: #6c63ff;
+  box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.12);
+}
+
+.submit-btn,
+.upload-btn,
+.chat-send-btn {
+  background: linear-gradient(135deg, #6c63ff 0%, #232634 100%);
+  color: #fff;
+}
+
+.submit-btn:disabled,
+.upload-btn:disabled,
+.chat-send-btn:disabled {
+  opacity: 0.5;
+}
+
+.chat-outer,
+.pdf-upload-section,
+.pdf-chat-section,
+.response-container {
+  background: #232634;
+  border: 2px solid #31344b;
+  color: #e0e0e0;
+}
+
+.chat-bubble {
+  background: #31344b;
+  color: #fff;
+}
+
+.chat-msg.user .chat-bubble {
+  background: #6c63ff;
+  color: #fff;
+}
+
+.error {
+  background: #3a1a1a;
+  border: 2px solid #c33;
+  color: #ffb3b3;
+}
+
+.success-indicator {
+  color: #6cffa6;
+}
+
+.typing-indicator {
+  color: #6c63ff;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  background: #232634;
+}
+::-webkit-scrollbar-thumb {
+  background: #31344b;
+  border-radius: 4px;
+}
+
 @media (max-width: 768px) {
   .header h1 {
     font-size: 2rem;
@@ -633,6 +745,16 @@ body {
     border-radius: 0;
   }
   .app-layout {
+    flex-direction: column;
+  }
+  .dark-sidebar {
+    display: none;
+  }
+  .dark-app {
+    margin: 0;
+    border-radius: 0;
+  }
+  .dark-mode {
     flex-direction: column;
   }
 }

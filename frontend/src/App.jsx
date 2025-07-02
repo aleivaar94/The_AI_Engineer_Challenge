@@ -24,6 +24,7 @@ function App() {
   const [ragMessage, setRagMessage] = useState('');
   const [ragResponse, setRagResponse] = useState('');
   const [isRagLoading, setIsRagLoading] = useState(false);
+  // Sidebar navigation state
   const [activeSidebar, setActiveSidebar] = useState('chat'); // 'chat' or 'pdf'
 
   // API Key modal state
@@ -432,10 +433,9 @@ function App() {
   };
 
   return (
-    <div className="app-layout">
+    <div className="app-layout dark-mode">
       {/* Sidebar */}
-      <aside className="sidebar">
-        <div className="sidebar-header">🧠 AI Engineer</div>
+      <aside className="sidebar dark-sidebar">
         <nav className="sidebar-nav">
           <ul>
             <li className={`sidebar-item${activeSidebar === 'chat' ? ' active' : ''}`} onClick={() => setActiveSidebar('chat')}>Chat</li>
@@ -444,15 +444,11 @@ function App() {
           </ul>
         </nav>
       </aside>
-      <div className="app">
-        <header className="header">
-          <h1>
-            Hi there, <span className="gradient-text">John</span><br />
-            What would like to know?
-          </h1>
-          <p>Use your own prompt or chat with your PDF!</p>
+      <div className="app dark-app">
+        <header className="header dark-header">
+          {/* Removed greeting message */}
         </header>
-        <main className="main-content">
+        <main className="main-content dark-main-content">
           {/* Main Content Area controlled by sidebar */}
           <div className="main-content-area">
             {/* Regular Chat View */}
