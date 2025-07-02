@@ -6,13 +6,78 @@
 
 ## <h1 align="center" id="heading"> 👋 Welcome to the AI Engineer Challenge</h1>
 
-## 🤖 Your First Vibe Coding LLM Application
+## 🤖 Your First Vibe Coding LLM Application with PDF RAG
 
 > If you need an introduction to `git`, or information on how to set up API keys for the tools we'll be using in this repository - check out our [Interactive Dev Environment for LLM Development](https://github.com/AI-Maker-Space/Interactive-Dev-Environment-for-AI-Engineers) which has everything you'd need to get started in this repository!
 
-In this repository, we'll walk you through the steps to create a LLM (Large Language Model) powered application with a vibe-coded frontend!
+In this repository, we'll walk you through the steps to create a **PDF RAG (Retrieval-Augmented Generation) powered application** with a vibe-coded frontend! 
+
+**🎯 What You'll Build:**
+- Regular AI chat interface with OpenAI models
+- **PDF upload and indexing system** 📄
+- **RAG-based chat with your PDFs** 🧠
+- Modern tabbed interface for seamless switching
+- Real-time streaming responses
 
 Are you ready? Let's get started!
+
+## 🔧 Quick Start with UV
+
+This project uses [UV](https://docs.astral.sh/uv/) for blazing-fast Python package and environment management!
+
+```bash
+# Install dependencies
+uv sync
+
+# Start the backend API
+cd api && uv run uvicorn app:app --reload --port 8000
+
+# In another terminal, start the frontend
+cd frontend && npm install && npm run dev
+```
+
+## ✨ Features
+
+### 🗣️ Regular Chat Mode
+- Stream chat responses from OpenAI models
+- Support for GPT-4, GPT-3.5 Turbo, and more
+- Custom system prompts for developer control
+
+### 📚 PDF Chat Mode  
+- **Upload any PDF** and chat with its content
+- **Automatic text extraction** using PyPDF2
+- **Smart chunking** for optimal context retrieval
+- **Vector database** powered by our custom aimakerspace library
+- **RAG responses** that cite relevant PDF sections
+
+### 🎨 Beautiful UI
+- **Tabbed interface** for easy mode switching
+- **Real-time upload progress** and status indicators
+- **Streaming responses** with typing animations
+- **Responsive design** that works on all devices
+
+## 🛠️ Technical Architecture
+
+### Backend (FastAPI)
+- **`/api/chat`** - Regular OpenAI chat endpoint
+- **`/api/upload-pdf`** - PDF upload and indexing
+- **`/api/chat-pdf`** - RAG chat with uploaded PDF
+- **`/api/pdf-status`** - Check PDF upload status
+
+### PDF Processing Pipeline
+1. **Upload** - Secure PDF file handling
+2. **Extract** - Text extraction with PyPDF2
+3. **Chunk** - Smart text splitting with overlap
+4. **Embed** - Vector embeddings via OpenAI
+5. **Index** - Store in vector database
+6. **Retrieve** - Semantic search for relevant chunks
+7. **Generate** - RAG responses with context
+
+### Frontend (React + Vite)
+- **Tabbed interface** for chat modes
+- **File upload** with drag-and-drop support
+- **Streaming chat** with real-time updates
+- **Beautiful animations** and status indicators
 
 <details>
   <summary>🖥️ Accessing "gpt-4.1-mini" (ChatGPT) like a developer</summary>
