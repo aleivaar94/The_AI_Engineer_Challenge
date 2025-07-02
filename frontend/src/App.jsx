@@ -39,6 +39,14 @@ function App() {
   const [isChatLoading, setIsChatLoading] = useState(false);
   const chatContainerRef = React.useRef(null);
 
+  // PDF chat conversation state
+  const [pdfChatHistory, setPdfChatHistory] = useState([
+    { role: 'system', content: 'You are a helpful assistant that answers questions about the uploaded PDF.' }
+  ]);
+  const [pdfUserInput, setPdfUserInput] = useState('');
+  const [isPdfChatLoading, setIsPdfChatLoading] = useState(false);
+  const pdfChatContainerRef = React.useRef(null);
+
   // Check PDF status on component mount
   useEffect(() => {
     const storedKey = sessionStorage.getItem('openai_api_key');
@@ -61,6 +69,13 @@ function App() {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [chatHistory, isChatLoading]);
+
+  // Scroll to bottom when pdfChatHistory changes
+  useEffect(() => {
+    if (pdfChatContainerRef.current) {
+      pdfChatContainerRef.current.scrollTop = pdfChatContainerRef.current.scrollHeight;
+    }
+  }, [pdfChatHistory, isPdfChatLoading]);
 
   /**
    * Check the status of uploaded PDF
@@ -371,6 +386,59 @@ function App() {
     }
   };
 
+  // Send user message and get assistant response for PDF chat
+  const handlePdfChatSubmit = async (e) => {
+    e.preventDefault();
+    if (!pdfUserInput.trim() || !apiKey || !pdfStatus.uploaded) return;
+    setIsPdfChatLoading(true);
+    setError('');
+    setPdfChatHistory(prev => [...prev, { role: 'user', content: pdfUserInput }]);
+    const userMsg = pdfUserInput;
+    setPdfUserInput('');
+    try {
+      // Prepare messages for API (system + all previous + new user)
+      const messages = pdfChatHistory
+        .filter(m => m.role !== 'assistant_stream')
+        .concat({ role: 'user', content: userMsg });
+      // Streaming response
+      const apiResponse = await fetch('/api/chat-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: messages.filter(m => m.role === 'user').map(m => m.content).join('\n'),
+          model: formData.model,
+          api_key: apiKey
+        }),
+      });
+      if (!apiResponse.ok) throw new Error(`API Error: ${apiResponse.status}`);
+      const reader = apiResponse.body?.getReader();
+      const decoder = new TextDecoder();
+      if (!reader) throw new Error('Failed to get response reader');
+      let accumulated = '';
+      setPdfChatHistory(prev => [...prev, { role: 'assistant_stream', content: '' }]);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, { stream: true });
+        accumulated += chunk;
+        setPdfChatHistory(prev => prev.map((msg, i) =>
+          i === prev.length - 1 && msg.role === 'assistant_stream'
+            ? { ...msg, content: accumulated }
+            : msg
+        ));
+      }
+      setPdfChatHistory(prev => prev.map((msg, i) =>
+        i === prev.length - 1 && msg.role === 'assistant_stream'
+          ? { role: 'assistant', content: accumulated }
+          : msg
+      ));
+    } catch (err) {
+      setError(`Failed to get response: ${err.message}`);
+    } finally {
+      setIsPdfChatLoading(false);
+    }
+  };
+
   return (
     <div className="app">
       {/* Application Header */}
@@ -533,53 +601,31 @@ function App() {
             {pdfStatus.uploaded && (
               <div className="pdf-chat-section">
                 <h3>💬 Chat with PDF</h3>
-                <form onSubmit={handleRagChat}>
-                  <div className="form-group">
-                    <label htmlFor="ragMessage">
-                      Ask a question about your PDF *
-                    </label>
-                    <textarea
-                      id="ragMessage"
-                      value={ragMessage}
-                      onChange={(e) => setRagMessage(e.target.value)}
-                      placeholder="What would you like to know about the PDF content?"
-                      required
-                    />
-                  </div>
-
-                  {/* Model Selection for RAG */}
-                  <div className="form-group">
-                    <label htmlFor="model">
-                      OpenAI Model
-                    </label>
-                    <select
-                      id="model"
-                      name="model"
-                      value={formData.model}
-                      onChange={handleInputChange}
-                    >
-                      <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
-                      <option value="gpt-4">GPT-4</option>
-                      <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                      <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                    </select>
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="submit-btn"
-                    disabled={isRagLoading}
-                  >
-                    {isRagLoading ? (
-                      <span className="loading">
-                        <span className="loading-spinner"></span>
-                        Analyzing PDF...
-                      </span>
-                    ) : (
-                      '🔍 Ask PDF'
+                <div className="chat-outer">
+                  <div className="chat-history" ref={pdfChatContainerRef}>
+                    {pdfChatHistory.filter(m => m.role !== 'system').map((msg, idx) => (
+                      <div key={idx} className={`chat-msg ${msg.role}`}>
+                        <span className="chat-bubble">{msg.content}</span>
+                      </div>
+                    ))}
+                    {isPdfChatLoading && (
+                      <div className="chat-msg assistant">
+                        <span className="chat-bubble typing-indicator">AI is reading your PDF...</span>
+                      </div>
                     )}
-                  </button>
-                </form>
+                  </div>
+                  <form className="chat-input-row" onSubmit={handlePdfChatSubmit}>
+                    <input
+                      type="text"
+                      className="chat-input"
+                      value={pdfUserInput}
+                      onChange={e => setPdfUserInput(e.target.value)}
+                      placeholder="Ask something about your PDF..."
+                      disabled={isPdfChatLoading}
+                    />
+                    <button type="submit" className="chat-send-btn" disabled={isPdfChatLoading || !pdfUserInput.trim()}>Send</button>
+                  </form>
+                </div>
               </div>
             )}
           </div>
