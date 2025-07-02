@@ -26,6 +26,7 @@ function App() {
   const [isRagLoading, setIsRagLoading] = useState(false);
   // Sidebar navigation state
   const [activeSidebar, setActiveSidebar] = useState('chat'); // 'chat' or 'pdf'
+  const [sidebarOpen, setSidebarOpen] = useState(true); // Collapsible sidebar state
 
   // API Key modal state
   const [showApiKeyModal, setShowApiKeyModal] = useState(false);
@@ -434,19 +435,24 @@ function App() {
 
   return (
     <div className="app-layout dark-mode">
-      {/* Sidebar */}
-      <aside className="sidebar dark-sidebar">
-        <nav className="sidebar-nav">
-          <ul>
-            <li className={`sidebar-item${activeSidebar === 'chat' ? ' active' : ''}`} onClick={() => setActiveSidebar('chat')}>Chat</li>
-            <li className={`sidebar-item${activeSidebar === 'pdf' ? ' active' : ''}`} onClick={() => setActiveSidebar('pdf')}>PDF</li>
-            <li className="sidebar-item" onClick={handleApiKeyButton}>Set API Key</li>
-          </ul>
-        </nav>
+      {/* Collapsible Sidebar */}
+      <aside className={`sidebar dark-sidebar${sidebarOpen ? '' : ' collapsed'}`}> 
+        <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+          {sidebarOpen ? '<' : '>'}
+        </button>
+        {sidebarOpen && (
+          <nav className="sidebar-nav">
+            <ul>
+              <li className={`sidebar-item${activeSidebar === 'chat' ? ' active' : ''}`} onClick={() => setActiveSidebar('chat')}>Chat</li>
+              <li className={`sidebar-item${activeSidebar === 'pdf' ? ' active' : ''}`} onClick={() => setActiveSidebar('pdf')}>PDF</li>
+              <li className="sidebar-item" onClick={handleApiKeyButton}>Set API Key</li>
+            </ul>
+          </nav>
+        )}
       </aside>
       <div className="app dark-app">
         <header className="header dark-header">
-          {/* Removed greeting message */}
+          {/* No greeting message */}
         </header>
         <main className="main-content dark-main-content">
           {/* Main Content Area controlled by sidebar */}
