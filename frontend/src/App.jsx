@@ -432,220 +432,230 @@ function App() {
   };
 
   return (
-    <div className="app">
-      {/* Application Header */}
-      <header className="header" style={{ position: 'relative' }}>
-        <h1>🤖 AI Chat Interface with PDF RAG</h1>
-        <p>Chat with OpenAI models or upload a PDF and ask questions about it</p>
-        {/* API Key Button */}
-        <button
-          className="api-key-btn"
-          style={{ position: 'absolute', top: 20, right: 30 }}
-          onClick={handleApiKeyButton}
-        >
-          {apiKey ? '🔑 API Key Set' : '🔑 Add API Key'}
-        </button>
-      </header>
-
-      {/* API Key Modal */}
-      {showApiKeyModal && (
-        <div className="modal-backdrop">
-          <div className="modal">
-            <h2>Enter your OpenAI API Key</h2>
-            <form onSubmit={handleApiKeySave}>
-              <input
-                type="password"
-                value={apiKeyInput}
-                onChange={e => setApiKeyInput(e.target.value)}
-                placeholder="sk-..."
-                autoFocus
-                className="api-key-input"
-              />
-              <button type="submit" className="submit-btn" style={{marginTop: 16}}>Enter</button>
-            </form>
+    <div className="app-layout">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="sidebar-header">🧠 AI Engineer</div>
+        <nav className="sidebar-nav">
+          <ul>
+            <li className="sidebar-item active">Chat</li>
+            <li className="sidebar-item">PDF</li>
+            <li className="sidebar-item">Settings</li>
+          </ul>
+        </nav>
+      </aside>
+      <div className="app">
+        <header className="header">
+          {/* API Key Button restored */}
+          <button className="api-key-btn" onClick={handleApiKeyButton}>
+            Set API Key
+          </button>
+          <h1>
+            Hi there, <span className="gradient-text">John</span><br />
+            What would like to know?
+          </h1>
+          <p>Use your own prompt or chat with your PDF!</p>
+        </header>
+        <main className="main-content">
+          {/* Tab Navigation */}
+          <div className="tab-navigation">
+            <button 
+              className={`tab-button ${activeTab === 'regular' ? 'active' : ''}`}
+              onClick={() => setActiveTab('regular')}
+            >
+              Regular Chat
+            </button>
+            <button 
+              className={`tab-button ${activeTab === 'pdf' ? 'active' : ''}`}
+              onClick={() => setActiveTab('pdf')}
+            >
+              PDF Chat
+            </button>
           </div>
-        </div>
-      )}
-
-      {/* Tab Navigation */}
-      <div className="tab-navigation">
-        <button 
-          className={`tab-button ${activeTab === 'regular' ? 'active' : ''}`}
-          onClick={() => setActiveTab('regular')}
-        >
-          Regular Chat
-        </button>
-        <button 
-          className={`tab-button ${activeTab === 'pdf' ? 'active' : ''}`}
-          onClick={() => setActiveTab('pdf')}
-        >
-          PDF Chat
-        </button>
-      </div>
-
-      {/* Main Content Area */}
-      <main className="main-content">
-        
-        {/* Regular Chat Tab */}
-        {activeTab === 'regular' && (
-          <div className="chat-outer">
-            <div className="chat-history" ref={chatContainerRef}>
-              {chatHistory.filter(m => m.role !== 'system').map((msg, idx) => (
-                <div key={idx} className={`chat-msg ${msg.role}`}> 
-                  <span className="chat-bubble">{msg.content}</span>
-                </div>
-              ))}
-              {isChatLoading && (
-                <div className="chat-msg assistant">
-                  <span className="chat-bubble typing-indicator">AI is typing...</span>
-                </div>
-              )}
-            </div>
-            <form className="chat-input-row" onSubmit={handleChatSubmit}>
-              <input
-                type="text"
-                className="chat-input"
-                value={userInput}
-                onChange={e => setUserInput(e.target.value)}
-                placeholder="Type your message..."
-                disabled={isChatLoading}
-                autoFocus
-              />
-              <button type="submit" className="chat-send-btn" disabled={isChatLoading || !userInput.trim()}>Send</button>
-            </form>
-          </div>
-        )}
-
-        {/* PDF Chat Tab */}
-        {activeTab === 'pdf' && (
-          <div className="pdf-chat-container">
-            {/* PDF Upload Section */}
-            <div className="pdf-upload-section">
-              <h3>📄 Upload PDF</h3>
-              
-              {/* PDF Status */}
-              {pdfStatus.uploaded ? (
-                <div className="pdf-status success">
-                  ✅ PDF Ready: {pdfStatus.message}
-                  {pdfStatus.chunks_count && (
-                    <div className="pdf-details">
-                      Chunks: {pdfStatus.chunks_count} | Characters: {pdfStatus.total_characters?.toLocaleString()}
+          {/* Main Content Area */}
+          <div className="main-content-area">
+            {/* Regular Chat Tab */}
+            {activeTab === 'regular' && (
+              <div className="chat-outer">
+                <div className="chat-history" ref={chatContainerRef}>
+                  {chatHistory.filter(m => m.role !== 'system').map((msg, idx) => (
+                    <div key={idx} className={`chat-msg ${msg.role}`}> 
+                      <span className="chat-bubble">{msg.content}</span>
+                    </div>
+                  ))}
+                  {isChatLoading && (
+                    <div className="chat-msg assistant">
+                      <span className="chat-bubble typing-indicator">AI is typing...</span>
                     </div>
                   )}
                 </div>
-              ) : (
-                <div className="pdf-status">
-                  📋 No PDF uploaded yet
-                </div>
-              )}
-
-              {/* File Upload */}
-              <div className="form-group">
-                <label htmlFor="pdf-file">
-                  Select PDF File
-                </label>
-                <input
-                  type="file"
-                  id="pdf-file"
-                  accept=".pdf"
-                  onChange={handleFileSelect}
-                />
-                {selectedFile && (
-                  <div className="selected-file">
-                    Selected: {selectedFile.name}
-                  </div>
-                )}
+                <form className="chat-input-row" onSubmit={handleChatSubmit}>
+                  <input
+                    type="text"
+                    className="chat-input"
+                    value={userInput}
+                    onChange={e => setUserInput(e.target.value)}
+                    placeholder="Type your message..."
+                    disabled={isChatLoading}
+                    autoFocus
+                  />
+                  <button type="submit" className="chat-send-btn" disabled={isChatLoading || !userInput.trim()}>Send</button>
+                </form>
               </div>
+            )}
 
-              <button
-                onClick={handlePdfUpload}
-                className="upload-btn"
-                disabled={!selectedFile || isUploading || !apiKey}
-              >
-                {isUploading ? (
-                  <span className="loading">
-                    <span className="loading-spinner"></span>
-                    Processing PDF...
-                  </span>
-                ) : (
-                  '📤 Upload & Index PDF'
-                )}
-              </button>
-            </div>
+            {/* PDF Chat Tab */}
+            {activeTab === 'pdf' && (
+              <div className="pdf-chat-container">
+                {/* PDF Upload Section */}
+                <div className="pdf-upload-section">
+                  <h3>📄 Upload PDF</h3>
+                  
+                  {/* PDF Status */}
+                  {pdfStatus.uploaded ? (
+                    <div className="pdf-status success">
+                      ✅ PDF Ready: {pdfStatus.message}
+                      {pdfStatus.chunks_count && (
+                        <div className="pdf-details">
+                          Chunks: {pdfStatus.chunks_count} | Characters: {pdfStatus.total_characters?.toLocaleString()}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="pdf-status">
+                      📋 No PDF uploaded yet
+                    </div>
+                  )}
 
-            {/* PDF Chat Section */}
-            {pdfStatus.uploaded && (
-              <div className="pdf-chat-section">
-                <h3>💬 Chat with PDF</h3>
-                <div className="chat-outer">
-                  <div className="chat-history" ref={pdfChatContainerRef}>
-                    {pdfChatHistory.filter(m => m.role !== 'system').map((msg, idx) => (
-                      <div key={idx} className={`chat-msg ${msg.role}`}>
-                        <span className="chat-bubble">{msg.content}</span>
-                      </div>
-                    ))}
-                    {isPdfChatLoading && (
-                      <div className="chat-msg assistant">
-                        <span className="chat-bubble typing-indicator">AI is reading your PDF...</span>
+                  {/* File Upload */}
+                  <div className="form-group">
+                    <label htmlFor="pdf-file">
+                      Select PDF File
+                    </label>
+                    <input
+                      type="file"
+                      id="pdf-file"
+                      accept=".pdf"
+                      onChange={handleFileSelect}
+                    />
+                    {selectedFile && (
+                      <div className="selected-file">
+                        Selected: {selectedFile.name}
                       </div>
                     )}
                   </div>
-                  <form className="chat-input-row" onSubmit={handlePdfChatSubmit}>
-                    <input
-                      type="text"
-                      className="chat-input"
-                      value={pdfUserInput}
-                      onChange={e => setPdfUserInput(e.target.value)}
-                      placeholder="Ask something about your PDF..."
-                      disabled={isPdfChatLoading}
-                    />
-                    <button type="submit" className="chat-send-btn" disabled={isPdfChatLoading || !pdfUserInput.trim()}>Send</button>
-                  </form>
+
+                  <button
+                    onClick={handlePdfUpload}
+                    className="upload-btn"
+                    disabled={!selectedFile || isUploading || !apiKey}
+                  >
+                    {isUploading ? (
+                      <span className="loading">
+                        <span className="loading-spinner"></span>
+                        Processing PDF...
+                      </span>
+                    ) : (
+                      '📤 Upload & Index PDF'
+                    )}
+                  </button>
+                </div>
+
+                {/* PDF Chat Section */}
+                {pdfStatus.uploaded && (
+                  <div className="pdf-chat-section">
+                    <h3>💬 Chat with PDF</h3>
+                    <div className="chat-outer">
+                      <div className="chat-history" ref={pdfChatContainerRef}>
+                        {pdfChatHistory.filter(m => m.role !== 'system').map((msg, idx) => (
+                          <div key={idx} className={`chat-msg ${msg.role}`}>
+                            <span className="chat-bubble">{msg.content}</span>
+                          </div>
+                        ))}
+                        {isPdfChatLoading && (
+                          <div className="chat-msg assistant">
+                            <span className="chat-bubble typing-indicator">AI is reading your PDF...</span>
+                          </div>
+                        )}
+                      </div>
+                      <form className="chat-input-row" onSubmit={handlePdfChatSubmit}>
+                        <input
+                          type="text"
+                          className="chat-input"
+                          value={pdfUserInput}
+                          onChange={e => setPdfUserInput(e.target.value)}
+                          placeholder="Ask something about your PDF..."
+                          disabled={isPdfChatLoading}
+                        />
+                        <button type="submit" className="chat-send-btn" disabled={isPdfChatLoading || !pdfUserInput.trim()}>Send</button>
+                      </form>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Error Display */}
+            {error && (
+              <div className="error">
+                <strong>Error:</strong> {error}
+              </div>
+            )}
+
+            {/* Regular Chat Response Display */}
+            {activeTab === 'regular' && (response || isLoading) && (
+              <div className="response-container">
+                <h3>
+                  {isLoading ? (
+                    <span className="typing-indicator">✨ AI is typing...</span>
+                  ) : (
+                    <span className="success-indicator">✅ Response</span>
+                  )}
+                </h3>
+                <div className="response-text">
+                  {response || (isLoading ? 'Waiting for response...' : '')}
+                </div>
+              </div>
+            )}
+
+            {/* RAG Chat Response Display */}
+            {activeTab === 'pdf' && (ragResponse || isRagLoading) && (
+              <div className="response-container">
+                <h3>
+                  {isRagLoading ? (
+                    <span className="typing-indicator">🤖 AI is reading your PDF...</span>
+                  ) : (
+                    <span className="success-indicator">📖 PDF Analysis</span>
+                  )}
+                </h3>
+                <div className="response-text">
+                  {ragResponse || (isRagLoading ? 'Analyzing PDF content...' : '')}
                 </div>
               </div>
             )}
           </div>
-        )}
-
-        {/* Error Display */}
-        {error && (
-          <div className="error">
-            <strong>Error:</strong> {error}
-          </div>
-        )}
-
-        {/* Regular Chat Response Display */}
-        {activeTab === 'regular' && (response || isLoading) && (
-          <div className="response-container">
-            <h3>
-              {isLoading ? (
-                <span className="typing-indicator">✨ AI is typing...</span>
-              ) : (
-                <span className="success-indicator">✅ Response</span>
-              )}
-            </h3>
-            <div className="response-text">
-              {response || (isLoading ? 'Waiting for response...' : '')}
+        </main>
+        {/* API Key Modal */}
+        {showApiKeyModal && (
+          <div className="modal-backdrop">
+            <div className="modal">
+              <h2>Set OpenAI API Key</h2>
+              <form onSubmit={handleApiKeySave}>
+                <input
+                  className="api-key-input"
+                  type="password"
+                  value={apiKeyInput}
+                  onChange={e => setApiKeyInput(e.target.value)}
+                  placeholder="Enter your OpenAI API key"
+                  autoFocus
+                />
+                <button className="submit-btn" type="submit">Save</button>
+                <button className="submit-btn" type="button" onClick={() => setShowApiKeyModal(false)} style={{background:'#eee',color:'#764ba2'}}>Cancel</button>
+              </form>
             </div>
           </div>
         )}
-
-        {/* RAG Chat Response Display */}
-        {activeTab === 'pdf' && (ragResponse || isRagLoading) && (
-          <div className="response-container">
-            <h3>
-              {isRagLoading ? (
-                <span className="typing-indicator">🤖 AI is reading your PDF...</span>
-              ) : (
-                <span className="success-indicator">📖 PDF Analysis</span>
-              )}
-            </h3>
-            <div className="response-text">
-              {ragResponse || (isRagLoading ? 'Analyzing PDF content...' : '')}
-            </div>
-          </div>
-        )}
-      </main>
+      </div>
     </div>
   );
 }
