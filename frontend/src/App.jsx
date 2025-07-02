@@ -323,9 +323,15 @@ function App() {
     setShowApiKeyModal(false);
   };
 
+  const [showApiKeyAlert, setShowApiKeyAlert] = useState(false); // For API key alert
+
   // Send user message and get assistant response
   const handleChatSubmit = async (e) => {
     e.preventDefault();
+    if (!apiKey) {
+      setShowApiKeyAlert(true);
+      return;
+    }
     if (!userInput.trim() || !apiKey) return;
     setIsChatLoading(true);
     setError('');
@@ -382,6 +388,10 @@ function App() {
   // Send user message and get assistant response for PDF chat
   const handlePdfChatSubmit = async (e) => {
     e.preventDefault();
+    if (!apiKey) {
+      setShowApiKeyAlert(true);
+      return;
+    }
     if (!pdfUserInput.trim() || !apiKey || !pdfStatus.uploaded) return;
     setIsPdfChatLoading(true);
     setError('');
@@ -636,6 +646,17 @@ function App() {
                 <button className="submit-btn" type="submit">Save</button>
                 <button className="submit-btn" type="button" onClick={() => setShowApiKeyModal(false)} style={{background:'#eee',color:'#764ba2'}}>Cancel</button>
               </form>
+            </div>
+          </div>
+        )}
+        {/* API Key Alert Popup */}
+        {showApiKeyAlert && (
+          <div className="modal-backdrop">
+            <div className="modal">
+              <h2>Set API key first</h2>
+              <button className="submit-btn" onClick={() => setShowApiKeyAlert(false)}>
+                OK
+              </button>
             </div>
           </div>
         )}
