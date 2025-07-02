@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 /**
  * Main Chat Application Component
- * Provides a user interface for interacting with the OpenAI Chat API
+ * Provides a user interface for interacting with the OpenAI Chat API and PDF RAG system
  */
 function App() {
   // State management for form inputs and API responses
@@ -16,6 +16,163 @@ function App() {
   const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  
+  // PDF-related state
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [pdfStatus, setPdfStatus] = useState({ uploaded: false });
+  const [ragMessage, setRagMessage] = useState('');
+  const [ragResponse, setRagResponse] = useState('');
+  const [isRagLoading, setIsRagLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('regular'); // 'regular' or 'pdf'
+
+  // Check PDF status on component mount
+  useEffect(() => {
+    checkPdfStatus();
+  }, []);
+
+  /**
+   * Check the status of uploaded PDF
+   */
+  const checkPdfStatus = async () => {
+    try {
+      const response = await fetch('/api/pdf-status');
+      const status = await response.json();
+      setPdfStatus(status);
+    } catch (err) {
+      console.error('Error checking PDF status:', err);
+    }
+  };
+
+  /**
+   * Handle file selection for PDF upload
+   */
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type === 'application/pdf') {
+      setSelectedFile(file);
+      setError('');
+    } else {
+      setError('Please select a valid PDF file');
+      setSelectedFile(null);
+    }
+  };
+
+  /**
+   * Handle PDF upload and indexing
+   */
+  const handlePdfUpload = async () => {
+    if (!selectedFile || !formData.apiKey.trim()) {
+      setError('Please select a PDF file and provide an API key');
+      return;
+    }
+
+    setIsUploading(true);
+    setError('');
+
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', selectedFile);
+      formDataUpload.append('api_key', formData.apiKey);
+
+      const response = await fetch('/api/upload-pdf', {
+        method: 'POST',
+        body: formDataUpload,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Upload failed');
+      }
+
+      const result = await response.json();
+      setPdfStatus({ 
+        uploaded: true, 
+        message: result.message,
+        chunks_count: result.chunks_count,
+        total_characters: result.total_characters
+      });
+      setSelectedFile(null);
+      
+      // Clear file input
+      const fileInput = document.getElementById('pdf-file');
+      if (fileInput) fileInput.value = '';
+      
+      alert(`PDF uploaded successfully! Processed ${result.chunks_count} chunks.`);
+    } catch (err) {
+      setError(`Upload failed: ${err.message}`);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  /**
+   * Handle RAG chat with PDF
+   */
+  const handleRagChat = async (e) => {
+    e.preventDefault();
+    
+    if (!ragMessage.trim() || !formData.apiKey.trim()) {
+      setError('Please enter a message and provide an API key');
+      return;
+    }
+
+    if (!pdfStatus.uploaded) {
+      setError('Please upload a PDF first');
+      return;
+    }
+
+    setIsRagLoading(true);
+    setError('');
+    setRagResponse('');
+
+    try {
+      const response = await fetch('/api/chat-pdf', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: ragMessage,
+          model: formData.model,
+          api_key: formData.apiKey
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Chat failed');
+      }
+
+      // Handle streaming response
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error('Failed to get response reader');
+      }
+
+      let accumulatedResponse = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) {
+          break;
+        }
+
+        const chunk = decoder.decode(value, { stream: true });
+        accumulatedResponse += chunk;
+        setRagResponse(accumulatedResponse);
+      }
+
+    } catch (err) {
+      console.error('Error in RAG chat:', err);
+      setError(`Failed to get response: ${err.message}`);
+    } finally {
+      setIsRagLoading(false);
+    }
+  };
 
   /**
    * Handles input changes for all form fields
@@ -120,8 +277,8 @@ function App() {
     <div className="app">
       {/* Application Header */}
       <header className="header">
-        <h1>🤖 OpenAI Chat Interface</h1>
-        <p>Interact with OpenAI models through a beautiful, streaming interface</p>
+        <h1>🤖 AI Chat Interface with PDF RAG</h1>
+        <p>Chat with OpenAI models or upload a PDF and ask questions about it</p>
         <button 
           onClick={checkHealth}
           style={{
@@ -139,89 +296,238 @@ function App() {
         </button>
       </header>
 
+      {/* Tab Navigation */}
+      <div className="tab-navigation">
+        <button 
+          className={`tab-button ${activeTab === 'regular' ? 'active' : ''}`}
+          onClick={() => setActiveTab('regular')}
+        >
+          Regular Chat
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'pdf' ? 'active' : ''}`}
+          onClick={() => setActiveTab('pdf')}
+        >
+          PDF Chat
+        </button>
+      </div>
+
       {/* Main Content Area */}
       <main className="main-content">
-        <form onSubmit={handleSubmit}>
-          {/* Developer/System Message Input */}
-          <div className="form-group">
-            <label htmlFor="developerMessage">
-              Developer Message (System Prompt) *
-            </label>
-            <textarea
-              id="developerMessage"
-              name="developerMessage"
-              value={formData.developerMessage}
-              onChange={handleInputChange}
-              placeholder="Enter the system message or instructions for the AI..."
-              required
-            />
-          </div>
+        
+        {/* Regular Chat Tab */}
+        {activeTab === 'regular' && (
+          <form onSubmit={handleSubmit}>
+            {/* Developer/System Message Input */}
+            <div className="form-group">
+              <label htmlFor="developerMessage">
+                Developer Message (System Prompt) *
+              </label>
+              <textarea
+                id="developerMessage"
+                name="developerMessage"
+                value={formData.developerMessage}
+                onChange={handleInputChange}
+                placeholder="Enter the system message or instructions for the AI..."
+                required
+              />
+            </div>
 
-          {/* User Message Input */}
-          <div className="form-group">
-            <label htmlFor="userMessage">
-              User Message *
-            </label>
-            <textarea
-              id="userMessage"
-              name="userMessage"
-              value={formData.userMessage}
-              onChange={handleInputChange}
-              placeholder="Enter your question or prompt..."
-              required
-            />
-          </div>
+            {/* User Message Input */}
+            <div className="form-group">
+              <label htmlFor="userMessage">
+                User Message *
+              </label>
+              <textarea
+                id="userMessage"
+                name="userMessage"
+                value={formData.userMessage}
+                onChange={handleInputChange}
+                placeholder="Enter your question or prompt..."
+                required
+              />
+            </div>
 
-          {/* Model Selection */}
-          <div className="form-group">
-            <label htmlFor="model">
-              OpenAI Model
-            </label>
-            <select
-              id="model"
-              name="model"
-              value={formData.model}
-              onChange={handleInputChange}
+            {/* Model Selection */}
+            <div className="form-group">
+              <label htmlFor="model">
+                OpenAI Model
+              </label>
+              <select
+                id="model"
+                name="model"
+                value={formData.model}
+                onChange={handleInputChange}
+              >
+                <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
+                <option value="gpt-4">GPT-4</option>
+                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                <option value="gpt-4-turbo">GPT-4 Turbo</option>
+              </select>
+            </div>
+
+            {/* API Key Input */}
+            <div className="form-group">
+              <label htmlFor="apiKey">
+                OpenAI API Key *
+              </label>
+              <input
+                type="password"
+                id="apiKey"
+                name="apiKey"
+                value={formData.apiKey}
+                onChange={handleInputChange}
+                placeholder="sk-..."
+                required
+              />
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              className="submit-btn"
+              disabled={isLoading}
             >
-              <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
-              <option value="gpt-4">GPT-4</option>
-              <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-              <option value="gpt-4-turbo">GPT-4 Turbo</option>
-            </select>
-          </div>
+              {isLoading ? (
+                <span className="loading">
+                  <span className="loading-spinner"></span>
+                  Generating Response...
+                </span>
+              ) : (
+                '🚀 Send Message'
+              )}
+            </button>
+          </form>
+        )}
 
-          {/* API Key Input */}
-          <div className="form-group">
-            <label htmlFor="apiKey">
-              OpenAI API Key *
-            </label>
-            <input
-              type="password"
-              id="apiKey"
-              name="apiKey"
-              value={formData.apiKey}
-              onChange={handleInputChange}
-              placeholder="sk-..."
-              required
-            />
-          </div>
+        {/* PDF Chat Tab */}
+        {activeTab === 'pdf' && (
+          <div className="pdf-chat-container">
+            {/* PDF Upload Section */}
+            <div className="pdf-upload-section">
+              <h3>📄 Upload PDF</h3>
+              
+              {/* PDF Status */}
+              {pdfStatus.uploaded ? (
+                <div className="pdf-status success">
+                  ✅ PDF Ready: {pdfStatus.message}
+                  {pdfStatus.chunks_count && (
+                    <div className="pdf-details">
+                      Chunks: {pdfStatus.chunks_count} | Characters: {pdfStatus.total_characters?.toLocaleString()}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="pdf-status">
+                  📋 No PDF uploaded yet
+                </div>
+              )}
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className="submit-btn"
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <span className="loading">
-                <span className="loading-spinner"></span>
-                Generating Response...
-              </span>
-            ) : (
-              '🚀 Send Message'
+              {/* API Key for PDF operations */}
+              <div className="form-group">
+                <label htmlFor="apiKey">
+                  OpenAI API Key *
+                </label>
+                <input
+                  type="password"
+                  id="apiKey"
+                  name="apiKey"
+                  value={formData.apiKey}
+                  onChange={handleInputChange}
+                  placeholder="sk-..."
+                  required
+                />
+              </div>
+
+              {/* File Upload */}
+              <div className="form-group">
+                <label htmlFor="pdf-file">
+                  Select PDF File
+                </label>
+                <input
+                  type="file"
+                  id="pdf-file"
+                  accept=".pdf"
+                  onChange={handleFileSelect}
+                />
+                {selectedFile && (
+                  <div className="selected-file">
+                    Selected: {selectedFile.name}
+                  </div>
+                )}
+              </div>
+
+              <button
+                onClick={handlePdfUpload}
+                className="upload-btn"
+                disabled={!selectedFile || isUploading || !formData.apiKey}
+              >
+                {isUploading ? (
+                  <span className="loading">
+                    <span className="loading-spinner"></span>
+                    Processing PDF...
+                  </span>
+                ) : (
+                  '📤 Upload & Index PDF'
+                )}
+              </button>
+            </div>
+
+            {/* PDF Chat Section */}
+            {pdfStatus.uploaded && (
+              <div className="pdf-chat-section">
+                <h3>💬 Chat with PDF</h3>
+                <form onSubmit={handleRagChat}>
+                  <div className="form-group">
+                    <label htmlFor="ragMessage">
+                      Ask a question about your PDF *
+                    </label>
+                    <textarea
+                      id="ragMessage"
+                      value={ragMessage}
+                      onChange={(e) => setRagMessage(e.target.value)}
+                      placeholder="What would you like to know about the PDF content?"
+                      required
+                    />
+                  </div>
+
+                  {/* Model Selection for RAG */}
+                  <div className="form-group">
+                    <label htmlFor="model">
+                      OpenAI Model
+                    </label>
+                    <select
+                      id="model"
+                      name="model"
+                      value={formData.model}
+                      onChange={handleInputChange}
+                    >
+                      <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
+                      <option value="gpt-4">GPT-4</option>
+                      <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                      <option value="gpt-4-turbo">GPT-4 Turbo</option>
+                    </select>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="submit-btn"
+                    disabled={isRagLoading}
+                  >
+                    {isRagLoading ? (
+                      <span className="loading">
+                        <span className="loading-spinner"></span>
+                        Analyzing PDF...
+                      </span>
+                    ) : (
+                      '🔍 Ask PDF'
+                    )}
+                  </button>
+                </form>
+              </div>
             )}
-          </button>
-        </form>
+          </div>
+        )}
 
         {/* Error Display */}
         {error && (
@@ -230,8 +536,8 @@ function App() {
           </div>
         )}
 
-        {/* Response Display */}
-        {(response || isLoading) && (
+        {/* Regular Chat Response Display */}
+        {activeTab === 'regular' && (response || isLoading) && (
           <div className="response-container">
             <h3>
               {isLoading ? (
@@ -242,6 +548,22 @@ function App() {
             </h3>
             <div className="response-text">
               {response || (isLoading ? 'Waiting for response...' : '')}
+            </div>
+          </div>
+        )}
+
+        {/* RAG Chat Response Display */}
+        {activeTab === 'pdf' && (ragResponse || isRagLoading) && (
+          <div className="response-container">
+            <h3>
+              {isRagLoading ? (
+                <span className="typing-indicator">🤖 AI is reading your PDF...</span>
+              ) : (
+                <span className="success-indicator">📖 PDF Analysis</span>
+              )}
+            </h3>
+            <div className="response-text">
+              {ragResponse || (isRagLoading ? 'Analyzing PDF content...' : '')}
             </div>
           </div>
         )}
